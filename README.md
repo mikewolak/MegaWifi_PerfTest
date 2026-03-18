@@ -1,12 +1,12 @@
 # MegaWifi Network Performance Test Suite
 
 ```
-  ┌──────────────────────────┐         TCP/2026         ┌──────────────────────────┐
+  ┌──────────────────────────┐         TCP/2026          ┌──────────────────────────┐
   │   macOS Client App       │◄═══════════════════════►  │   Sega Genesis Server    │
   │   (Objective-C / Cocoa)  │    echo blocks + timing   │   (m68k / SGDK)          │
   │                          │                           │                          │
   │  ┌────────────────────┐  │                           │  ┌────────────────────┐  │
-  │  │ [Throughput|Latency]│  │                           │  │ BG_A: Text overlay │  │
+  │  │[Throughput|Latency]│  │                           │  │ BG_A: Text overlay │  │
   │  │                    │  │                           │  │   Title / IP:port  │  │
   │  │ Throughput:        │  │                           │  │   FW version       │  │
   │  │  Block size/count  │  │                           │  │   Server state     │  │
@@ -30,10 +30,10 @@ Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.
 
 | Metric              | Value                                        |
 |---------------------|----------------------------------------------|
-| Throughput (TX+RX)  | ~11.6 KB/s each direction at 1460-byte blocks |
+| Throughput (TX+RX)  | ~11.6 KB/s each direction at 1460-byte blocks|
 | Round-trip latency  | 11.1 ms avg (8.7 ms min, 28.0 ms max)        |
 | VBlank frames / RTT | 0.7 avg (0.5 min, 1.7 max)                   |
-| Jitter (std dev)    | 2.4 ms                                        |
+| Jitter (std dev)    | 2.4 ms                                       |
 
 A single LSD message round-trip completes well within one VBlank frame
 (16.67 ms at 60 Hz), making the serial interface suitable for real-time
@@ -144,24 +144,24 @@ Raw TCP echo with a 4-byte big-endian handshake on port 2026:
 
 ```
   Client                              Genesis
-    │                                    │
-    │──── TCP connect ──────────────────►│
-    │                                    │
-    │          (500 ms delay)            │
-    │                                    │
+    │                                   │
+    │──── TCP connect ─────────────────►│
+    │                                   │
+    │          (500 ms delay)           │
+    │                                   │
     │──── [blk_sz:u16][num:u16] ───────►│  Handshake (4 bytes)
     │◄─── [blk_sz:u16][num:u16] ────────│  ACK
-    │                                    │
+    │                                   │
     │──── block[0] (blk_sz bytes) ─────►│  Echo loop
     │◄─── block[0] (blk_sz bytes) ──────│
     │──── block[1] ────────────────────►│
     │◄─── block[1] ─────────────────────│
-    │         ...                        │
+    │         ...                       │
     │──── block[N-1] ──────────────────►│
     │◄─── block[N-1] ───────────────────│
-    │                                    │
-    │──── TCP close ────────────────────►│
-    │                                    │
+    │                                   │
+    │──── TCP close ───────────────────►│
+    │                                   │
 ```
 
 ---
@@ -345,7 +345,7 @@ lesson applies to any SGDK project using tiled backgrounds.
 ## Configuration
 
 | Parameter      | Default            | Location         |
-|----------------|--------------------|--------------------|
+|----------------|--------------------|------------------|
 | WiFi SSID      | (MegaWifi Slot 0)  | `perf_server.c`  |
 | WiFi Password  | (MegaWifi Slot 0)  | `perf_server.c`  |
 | TCP Port       | 2026               | Both             |
