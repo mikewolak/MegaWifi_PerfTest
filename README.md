@@ -27,6 +27,10 @@ Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.  Tested at up to
 **19.5 KB/s** sustained echo throughput on real hardware — performance is
 symmetric at **~10 KB/s** in each direction (TX and RX).
 
+| Genesis Server | macOS Client |
+|:-:|:-:|
+| ![Genesis echo server running on real hardware](perf_test_genesis.png) | ![macOS performance test client](perf_test_mac.png) |
+
 ---
 
 ## Quick Start
