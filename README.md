@@ -23,9 +23,8 @@
 ```
 
 Measures TCP throughput and round-trip latency between a macOS client and a
-Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.  Tested at up to
-**19.5 KB/s** sustained echo throughput on real hardware — performance is
-symmetric at **~10 KB/s** in each direction (TX and RX).
+Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.  Performance is
+symmetric at **~10 KB/s** in each direction (TX and RX) on real hardware.
 
 | Genesis Server | macOS Client |
 |:-:|:-:|
@@ -272,15 +271,15 @@ lesson applies to any SGDK project using tiled backgrounds.
 
 ## Configuration
 
-| Parameter      | Default      | Location          |
-|----------------|--------------|--------------------|
-| WiFi SSID      | (hardcoded)  | `perf_server.c`    |
-| WiFi Password  | (hardcoded)  | `perf_server.c`    |
-| TCP Port       | 2026         | Both               |
-| MW_BUFLEN      | 1460         | `config.h`         |
-| Block timeout  | 10 s         | `perf_server.c`    |
-| Connect wait   | 5 min        | `perf_server.c`    |
-| Connect delay  | 500 ms       | `PerfTestVC.m`     |
+| Parameter      | Default            | Location         |
+|----------------|--------------------|--------------------|
+| WiFi SSID      | (MegaWifi Slot 0)  | `perf_server.c`  |
+| WiFi Password  | (MegaWifi Slot 0)  | `perf_server.c`  |
+| TCP Port       | 2026               | Both             |
+| MW_BUFLEN      | 1460               | `config.h`       |
+| Block timeout  | 10 s               | `perf_server.c`  |
+| Connect wait   | 5 min              | `perf_server.c`  |
+| Connect delay  | 500 ms             | `PerfTestVC.m`   |
 
 ---
 
