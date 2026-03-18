@@ -24,7 +24,8 @@
 
 Measures TCP throughput and round-trip latency between a macOS client and a
 Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.  Performance is
-symmetric at **~10 KB/s** in each direction (TX and RX) on real hardware.
+symmetric at **~11.6 KB/s** in each direction (TX and RX) on real hardware
+at the maximum 1460-byte block size.
 
 | Genesis Server | macOS Client |
 |:-:|:-:|
