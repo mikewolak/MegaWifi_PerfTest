@@ -6,16 +6,17 @@
   │   (Objective-C / Cocoa)  │    echo blocks + timing   │   (m68k / SGDK)          │
   │                          │                           │                          │
   │  ┌────────────────────┐  │                           │  ┌────────────────────┐  │
-  │  │ Host / Port        │  │                           │  │ BG_A: Text overlay │  │
-  │  │ Block Size (64-1460│  │                           │  │   Title / IP:port  │  │
-  │  │ Num Blocks         │  │                           │  │   FW version       │  │
-  │  │ Continuous mode    │  │                           │  │   Server state     │  │
-  │  │ Live TX/RX KB/s    │  │                           │  │   Session stats    │  │
-  │  │ RTT / ETA          │  │                           │  │   Scrolling log    │  │
-  │  │ Per-block log      │  │                           │  ├────────────────────┤  │
-  │  │ CSV export         │  │                           │  │ BG_B: girl.png     │  │
-  │  └────────────────────┘  │                           │  │  diagonal scroll   │  │
-  └──────────────────────────┘                           │  │  +1X +1Y / VBlank  │  │
+  │  │ [Throughput|Latency]│  │                           │  │ BG_A: Text overlay │  │
+  │  │                    │  │                           │  │   Title / IP:port  │  │
+  │  │ Throughput:        │  │                           │  │   FW version       │  │
+  │  │  Block size/count  │  │                           │  │   Server state     │  │
+  │  │  TX/RX KB/s, ETA   │  │                           │  │   Session stats    │  │
+  │  │                    │  │                           │  │   Scrolling log    │  │
+  │  │ Latency:           │  │                           │  ├────────────────────┤  │
+  │  │  Payload/ping count│  │                           │  │ BG_B: girl.png     │  │
+  │  │  RTT ms + VBlanks  │  │                           │  │  diagonal scroll   │  │
+  │  └────────────────────┘  │                           │  │  +1X +1Y / VBlank  │  │
+  └──────────────────────────┘                           │  │                    │  │
                                                          │  └────────────────────┘  │
                                                          │          MegaWifi        │
                                                          │        ESP32-C3 ─── WiFi │
@@ -23,9 +24,20 @@
 ```
 
 Measures TCP throughput and round-trip latency between a macOS client and a
-Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.  Performance is
-symmetric at **~11.6 KB/s** in each direction (TX and RX) on real hardware
-at the maximum 1460-byte block size.
+Sega Genesis running the MegaWifi ESP32-C3 WiFi cartridge.
+
+**Measured on real hardware (100-ping average, 4-byte payload):**
+
+| Metric              | Value                                        |
+|---------------------|----------------------------------------------|
+| Throughput (TX+RX)  | ~11.6 KB/s each direction at 1460-byte blocks |
+| Round-trip latency  | 11.1 ms avg (8.7 ms min, 28.0 ms max)        |
+| VBlank frames / RTT | 0.7 avg (0.5 min, 1.7 max)                   |
+| Jitter (std dev)    | 2.4 ms                                        |
+
+A single LSD message round-trip completes well within one VBlank frame
+(16.67 ms at 60 Hz), making the serial interface suitable for real-time
+co-processor offload (crypto, math, JSON parsing) with sub-frame response.
 
 | Genesis Server | macOS Client |
 |:-:|:-:|
@@ -82,13 +94,24 @@ md/
 A native macOS GUI application built with plain Objective-C and Cocoa — no
 Xcode project, no NIBs, just a Makefile and source files.
 
-Features:
-- Connection panel with host/port (remembers last IP via NSUserDefaults)
+The app has two tabs, modelled after the MegaWifi MDMA programmer interface:
+
+**Throughput tab:**
 - Configurable block size (64–1460), block count, continuous mode
 - Live statistics: TX/RX KB/s, round-trip time, elapsed/ETA, progress bar
 - Per-block timing log with CSV export
+
+**Latency tab:**
+- Configurable payload size (4–1460 bytes) and ping count
+- Per-ping RTT in milliseconds and VBlank frames (÷ 16.67 ms)
+- Summary statistics: min / avg / max RTT, jitter (standard deviation)
+- CSV export of all ping results
+
+**Common features:**
+- Connection panel with host/port (remembers last IP via NSUserDefaults)
 - Non-blocking TCP connect with `select()` timeout
 - 500 ms post-connect delay for Genesis server compatibility
+- Shared status bar with connection indicator and cancel button
 - SceneKit rotating-cube About window
 - DMG distribution target (`make dmg`)
 
@@ -106,10 +129,11 @@ mac-app/
 └── src/
     ├── main.m               # Manual NSApplication bootstrap (no NIB)
     ├── AppDelegate.{h,m}    # Menu bar, window creation
-    ├── MainWindowController.{h,m}   # Window + status bar
-    ├── PerfTestViewController.{h,m} # All test logic + UI
-    ├── AboutWindowController.{h,m}  # SceneKit cube About window
-    └── me_floyd_png.{h,c}          # PNG decoder for cube texture
+    ├── MainWindowController.{h,m}       # Tabbed window + shared status bar
+    ├── PerfTestViewController.{h,m}     # Throughput test tab
+    ├── LatencyTestViewController.{h,m}  # Latency ping test tab
+    ├── AboutWindowController.{h,m}      # SceneKit cube About window
+    └── me_floyd_png.{h,c}              # PNG decoder for cube texture
 ```
 
 ---
@@ -253,6 +277,54 @@ The upstream `mw_sock_conn_wait()` subtracted `MW_STAT_POLL_MS` (250)
 from a frame counter instead of `MW_STAT_POLL_TOUT` (~15 frames), making
 timeouts **17× shorter** than intended.  Fixed in the local copy and
 pushed upstream (stock_ticker commit `19d8dce`).
+
+### Round-Trip Latency and the VBlank Budget
+
+The full echo path for a single message traverses:
+
+```
+  macOS  →  WiFi  →  ESP32-C3  →  LSD serial  →  Genesis (m68k)
+  macOS  ←  WiFi  ←  ESP32-C3  ←  LSD serial  ←  Genesis (m68k)
+```
+
+Measured with a 4-byte payload over 100 pings on real hardware:
+
+| Statistic     | RTT (ms) | VBlank frames |
+|---------------|----------|---------------|
+| Minimum       |      8.7 |           0.5 |
+| Average       |     11.1 |           0.7 |
+| Maximum       |     28.0 |           1.7 |
+| Jitter (σ)    |      2.4 |           0.1 |
+
+The average round-trip fits comfortably within a single VBlank frame
+(16.67 ms at 60 Hz NTSC).  Outliers beyond one frame are attributable to
+WiFi retransmissions or ESP32 TCP stack scheduling — the LSD serial
+interface itself operates well below the frame budget.
+
+**Throughput ceiling analysis:** At 11.1 ms average RTT with synchronous
+send/recv, the protocol can sustain ~90 round-trips per second.  At the
+maximum 1460-byte block size: `90 × 1460 = ~128 KB/s` theoretical
+bidirectional.  The observed ~11.6 KB/s per direction (~23.2 KB/s total)
+indicates that the synchronous echo loop — which serialises
+send→recv→send→recv — is the primary bottleneck, not the raw serial
+bandwidth (1.5 Mbaud ≈ 187 KB/s).
+
+**Implications for co-processor offload:** Sub-frame latency means the
+Genesis can issue a command to the ESP32-C3 (e.g., AES encrypt, SHA hash,
+float math) and receive the result within the same VBlank frame, enabling
+real-time cryptographic and computational offload without visible stalls.
+
+### Socket Teardown After Client Disconnect
+
+After `mw_close()`, the ESP32 lwIP TCP stack may hold the socket in
+`TIME_WAIT` for several seconds.  Polling `mw_sock_stat_get()` in a loop
+immediately after close sends repeated commands over the LSD serial link
+while the channel is being torn down, which corrupts the protocol state
+and prevents rebinding.
+
+**Fix:** Use a fixed 3-second delay after `mw_close()` instead of status
+polling.  This gives the TCP stack sufficient time to release the socket
+without interfering with the LSD command channel.
 
 ### TILE_ATTR_FULL — rescomp Tilemap Pitfall
 

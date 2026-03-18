@@ -33,7 +33,8 @@ SRC_M = src/main.m \
         src/AppDelegate.m \
         src/AboutWindowController.m \
         src/MainWindowController.m \
-        src/PerfTestViewController.m
+        src/PerfTestViewController.m \
+        src/LatencyTestViewController.m
 
 OBJS_C = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRC_C))
 OBJS_M = $(patsubst %.m,$(OBJ_DIR)/%.o,$(SRC_M))

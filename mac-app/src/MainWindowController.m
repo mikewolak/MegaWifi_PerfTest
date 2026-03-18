@@ -1,10 +1,13 @@
-//  MainWindowController.m  — single-panel window with status bar
+//  MainWindowController.m  — tabbed window with shared status bar
 
 #import "MainWindowController.h"
 #import "PerfTestViewController.h"
+#import "LatencyTestViewController.h"
 
 @implementation MainWindowController {
-    PerfTestViewController  *_perfVC;
+    PerfTestViewController    *_perfVC;
+    LatencyTestViewController *_latencyVC;
+    NSTabView                 *_tabView;
 
     // Status area
     NSTextField             *_statusLabel;
@@ -18,7 +21,7 @@
 
 - (instancetype)init
 {
-    NSRect frame = NSMakeRect(0, 0, 620, 580);
+    NSRect frame = NSMakeRect(0, 0, 620, 620);
     NSUInteger style = NSWindowStyleMaskTitled
                      | NSWindowStyleMaskClosable
                      | NSWindowStyleMaskMiniaturizable
@@ -50,16 +53,32 @@
     [self _buildContentView];
     [self _buildStatusBar];
 
-    // Install the perf test panel
+    // Create view controllers
     _perfVC = [[PerfTestViewController alloc] initWithWindowController:self];
-    NSView *v = _perfVC.view;
-    v.translatesAutoresizingMaskIntoConstraints = NO;
-    [_contentArea addSubview:v];
+    _latencyVC = [[LatencyTestViewController alloc] initWithWindowController:self];
+
+    // Build tab view
+    _tabView = [[NSTabView alloc] init];
+    _tabView.translatesAutoresizingMaskIntoConstraints = NO;
+    _tabView.tabViewType = NSTopTabsBezelBorder;
+    _tabView.font = [NSFont systemFontOfSize:12 weight:NSFontWeightMedium];
+
+    NSTabViewItem *throughputTab = [[NSTabViewItem alloc] initWithIdentifier:@"throughput"];
+    throughputTab.label = @"Throughput";
+    throughputTab.view = _perfVC.view;
+    [_tabView addTabViewItem:throughputTab];
+
+    NSTabViewItem *latencyTab = [[NSTabViewItem alloc] initWithIdentifier:@"latency"];
+    latencyTab.label = @"Latency";
+    latencyTab.view = _latencyVC.view;
+    [_tabView addTabViewItem:latencyTab];
+
+    [_contentArea addSubview:_tabView];
     [NSLayoutConstraint activateConstraints:@[
-        [v.topAnchor      constraintEqualToAnchor:_contentArea.topAnchor],
-        [v.bottomAnchor   constraintEqualToAnchor:_contentArea.bottomAnchor],
-        [v.leadingAnchor  constraintEqualToAnchor:_contentArea.leadingAnchor],
-        [v.trailingAnchor constraintEqualToAnchor:_contentArea.trailingAnchor],
+        [_tabView.topAnchor      constraintEqualToAnchor:_contentArea.topAnchor constant:8],
+        [_tabView.bottomAnchor   constraintEqualToAnchor:_contentArea.bottomAnchor constant:-4],
+        [_tabView.leadingAnchor  constraintEqualToAnchor:_contentArea.leadingAnchor constant:8],
+        [_tabView.trailingAnchor constraintEqualToAnchor:_contentArea.trailingAnchor constant:-8],
     ]];
 }
 
@@ -201,7 +220,6 @@
 
 - (void)_cancel:(id)sender
 {
-    // Notify the perf test VC
     [[NSNotificationCenter defaultCenter] postNotificationName:@"MWPerfCancelRequested"
                                                         object:nil];
     [self setStatus:@"Stopping..."];
