@@ -69,7 +69,6 @@ static NSTextField *statsLabel(NSString *text)
     // Configuration
     NSPopUpButton       *_blockSizePopup;
     NSTextField         *_numBlocksField;
-    NSPopUpButton       *_protocolPopup;
     NSButton            *_continuousCheck;
 
     // Live stats
@@ -161,15 +160,6 @@ static NSTextField *statsLabel(NSString *text)
 
     _numBlocksField = inputField(@"100", 70);
     [root addSubview:_numBlocksField];
-
-    NSTextField *protoLabel = fieldLabel(@"Protocol:");
-    [root addSubview:protoLabel];
-
-    _protocolPopup = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
-    _protocolPopup.translatesAutoresizingMaskIntoConstraints = NO;
-    [_protocolPopup addItemWithTitle:@"TCP"];
-    [_protocolPopup addItemWithTitle:@"UDP"];
-    [root addSubview:_protocolPopup];
 
     _continuousCheck = [NSButton checkboxWithTitle:@"Continuous (repeat until stopped)"
                                             target:nil action:nil];
@@ -290,19 +280,11 @@ static NSTextField *statsLabel(NSString *text)
         [_numBlocksField.centerYAnchor constraintEqualToAnchor:bsLabel.centerYAnchor],
         [_numBlocksField.widthAnchor   constraintEqualToConstant:70],
 
-        // Row 2: Protocol + Continuous
-        [protoLabel.topAnchor      constraintEqualToAnchor:bsLabel.bottomAnchor constant:10],
-        [protoLabel.leadingAnchor  constraintEqualToAnchor:root.leadingAnchor constant:LM],
-        [protoLabel.widthAnchor    constraintEqualToConstant:LW],
+        // Row 2: Continuous mode
+        [_continuousCheck.topAnchor     constraintEqualToAnchor:bsLabel.bottomAnchor constant:10],
+        [_continuousCheck.leadingAnchor constraintEqualToAnchor:root.leadingAnchor constant:LM],
 
-        [_protocolPopup.leadingAnchor constraintEqualToAnchor:protoLabel.trailingAnchor constant:FG],
-        [_protocolPopup.centerYAnchor constraintEqualToAnchor:protoLabel.centerYAnchor],
-        [_protocolPopup.widthAnchor   constraintEqualToConstant:90],
-
-        [_continuousCheck.leadingAnchor constraintEqualToAnchor:_protocolPopup.trailingAnchor constant:24],
-        [_continuousCheck.centerYAnchor constraintEqualToAnchor:protoLabel.centerYAnchor],
-
-        [sep2.topAnchor      constraintEqualToAnchor:protoLabel.bottomAnchor constant:12],
+        [sep2.topAnchor      constraintEqualToAnchor:_continuousCheck.bottomAnchor constant:12],
         [sep2.leadingAnchor  constraintEqualToAnchor:root.leadingAnchor constant:LM],
         [sep2.trailingAnchor constraintEqualToAnchor:root.trailingAnchor constant:-LM],
 
